@@ -23,12 +23,24 @@
     const save = payload || {};
     const gameState = save.state || {};
     const stats = gameState.stats || {};
+    const zd = gameState.zeroDay || {};
+    const zdSt = zd.stats || {};
+    const stage = gameState.stage || {};
     const currentProfile = auth() && auth().getProfile ? auth().getProfile() : null;
     const patch = {
       uid: authUser.uid,
       email: authUser.email || '',
+      version: '3.0.0',
       totalHackCount: Number(stats.hackSuccessCount || 0),
       totalCreditsEarned: Number(stats.creditsEarnedTotal || 0),
+      // v3.0.0 new fields
+      stageClearCount: Number(stats.stageClearCount || 0),
+      stageHighestFloor: Number(stage.highest || 0),
+      extremeHackCount: Number(stats.extremeHackSuccessCount || 0),
+      zeroDayPveRuns: Number(zdSt.pveRuns || 0),
+      zeroDayBestDepth: Number(zdSt.pveBestDepth || 0),
+      collectionPower: Number(stats.collectionPower || 0),
+      weeklyScore: Number(stats.weeklyScore || 0),
       lastSaveAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     if (currentProfile && Object.prototype.hasOwnProperty.call(currentProfile, 'favoriteCodeId')) {

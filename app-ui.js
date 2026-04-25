@@ -227,7 +227,7 @@
 
 
 
-// === APP SHELL NAV (HOME / CODES / SHOP / LAB / COMING SOON) ===
+// === APP SHELL NAV (SHOP / CODES / HOME / LAB / COMING SOON) ===
 (function(){
   const main = document.getElementById('main');
   const left = document.getElementById('leftPanel');
@@ -461,11 +461,11 @@
   nav.id = 'appMainNav';
   nav.className = 'mobile-tabs app-main-tabs';
   nav.innerHTML = `
-    <button type="button" data-main-view="home">${label('mobileHome', 'HOME')}</button>
-    <button type="button" data-main-view="codes">${label('mobileCodes', 'CODES')}</button>
     <button type="button" data-main-view="shop">${label('mobileShop', 'SHOP')}</button>
+    <button type="button" data-main-view="codes">${label('mobileCodes', 'CODES')}</button>
+    <button type="button" data-main-view="home">${label('mobileHome', 'HOME')}</button>
     <button type="button" data-main-view="lab">${label('mobileLab', 'LAB')}</button>
-    <button type="button" data-main-view="coming">${label('mobileComing', 'COMING SOON')}</button>
+    <button type="button" data-main-view="coming" data-nav-coming="1">${label('mobileComing', 'COMING SOON')}</button>
   `;
   const header = document.querySelector('header');
   if(header && header.nextSibling) header.parentNode.insertBefore(nav, header.nextSibling);
@@ -496,8 +496,30 @@
     try { document.dispatchEvent(new CustomEvent('hcsig:main-view', { detail: { view } })); } catch(e) {}
   }
 
+  function showComingToast(){
+    let toast = document.getElementById('comingToast');
+    if(!toast){
+      toast = document.createElement('div');
+      toast.id = 'comingToast';
+      toast.className = 'coming-toast';
+      toast.textContent = label('comingSoonToast', '다음 업데이트에서 공개됩니다');
+      document.body.appendChild(toast);
+    }
+    toast.classList.remove('coming-toast-visible');
+    void toast.offsetWidth;
+    toast.classList.add('coming-toast-visible');
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => toast.classList.remove('coming-toast-visible'), 2400);
+  }
+
   nav.querySelectorAll('[data-main-view]').forEach(btn => {
-    btn.addEventListener('click', () => setView(btn.dataset.mainView));
+    btn.addEventListener('click', () => {
+      if(btn.dataset.navComing === '1'){
+        showComingToast();
+        return;
+      }
+      setView(btn.dataset.mainView);
+    });
   });
 
   document.addEventListener('hcsig:navigate-main', (event) => {
@@ -506,9 +528,9 @@
   });
 
   function syncLabels(){
-    nav.querySelector('[data-main-view="home"]').textContent = label('mobileHome', 'HOME');
-    nav.querySelector('[data-main-view="codes"]').textContent = label('mobileCodes', 'CODES');
     nav.querySelector('[data-main-view="shop"]').textContent = label('mobileShop', 'SHOP');
+    nav.querySelector('[data-main-view="codes"]').textContent = label('mobileCodes', 'CODES');
+    nav.querySelector('[data-main-view="home"]').textContent = label('mobileHome', 'HOME');
     nav.querySelector('[data-main-view="lab"]').textContent = label('mobileLab', 'LAB');
     nav.querySelector('[data-main-view="coming"]').textContent = label('mobileComing', 'COMING SOON');
   }
@@ -521,68 +543,7 @@
 })();
 
 
-/* === CHRISTMAS SNOW EFFECT (v1.6.6: toggle + stop) === */
-(function(){
-  const canvas = document.getElementById('snow-canvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-
-  let w = 0, h = 0;
-  let rafId = null;
-  let enabled = false;
-
-  function resize(){
-    w = canvas.width = window.innerWidth;
-    h = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize, {passive:true});
-
-  const flakes = Array.from({length: 80}, () => ({
-    x: Math.random()*w,
-    y: Math.random()*h,
-    r: Math.random()*2+1,
-    s: Math.random()*0.5+0.5,
-    o: Math.random()*0.5+0.3
-  }));
-
-  function tick(){
-    if(!enabled){ rafId = null; return; }
-    ctx.clearRect(0,0,w,h);
-    for(const f of flakes){
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
-      ctx.fillStyle = `rgba(255,255,255,${f.o})`;
-      ctx.fill();
-      f.y += f.s;
-      if(f.y > h){ f.y = -5; f.x = Math.random()*w; }
-    }
-    rafId = requestAnimationFrame(tick);
-  }
-
-  function start(){
-    if(enabled && !rafId) rafId = requestAnimationFrame(tick);
-  }
-
-  function stop(){
-    enabled = false;
-    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-    try { ctx.clearRect(0,0,w,h); } catch(e) {}
-  }
-
-  window.__snowFX = {
-    setEnabled(on){
-      enabled = !!on;
-      if(enabled){
-        start();
-      } else {
-        stop();
-      }
-    }
-  };
-
-  window.__snowFX.setEnabled(canvas.style.display !== 'none');
-})();
+// Snow effect removed in v3.0.0
 
 
 // === keep mobile tab labels in sync after language/state restore ===
@@ -590,9 +551,9 @@
   function syncMobileTabLabels(){
     try {
       if (typeof t !== 'function') return;
-      document.querySelectorAll('[data-main-view="home"]').forEach(el => { el.textContent = t('mobileHome'); });
-      document.querySelectorAll('[data-main-view="codes"]').forEach(el => { el.textContent = t('mobileCodes'); });
       document.querySelectorAll('[data-main-view="shop"]').forEach(el => { el.textContent = t('mobileShop'); });
+      document.querySelectorAll('[data-main-view="codes"]').forEach(el => { el.textContent = t('mobileCodes'); });
+      document.querySelectorAll('[data-main-view="home"]').forEach(el => { el.textContent = t('mobileHome'); });
       document.querySelectorAll('[data-main-view="lab"]').forEach(el => { el.textContent = t('mobileLab'); });
       document.querySelectorAll('[data-main-view="coming"]').forEach(el => { el.textContent = t('mobileComing'); });
     } catch (e) {}
